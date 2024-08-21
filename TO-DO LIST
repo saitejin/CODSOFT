@@ -1,0 +1,216 @@
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
+import sqlite3 as sql
+
+def add_task():
+    task_string = task_field.get()
+    if len(task_string) == 0:
+        messagebox.showinfo('Error', 'Field is Empty.')
+    else:
+        tasks.append((task_string, 0))
+        the_cursor.execute('insert into tasks (title, completed) values (?, ?)', (task_string, 0))
+        list_update()
+        task_field.delete(0, 'end')
+
+def list_update():
+    clear_list()
+    for task in tasks:
+        display_task = task[0] if task[1] == 0 else f"{task[0]} (Completed)"
+        task_listbox.insert('end', display_task)
+
+def delete_task():
+    try:
+        the_value = task_listbox.get(task_listbox.curselection())
+        task_title = the_value.replace(" (Completed)", "")
+        if (task_title, 0) in tasks or (task_title, 1) in tasks:
+            tasks.remove((task_title, 0)) if (task_title, 0) in tasks else tasks.remove((task_title, 1))
+            list_update()
+            the_cursor.execute('delete from tasks where title = ?', (task_title,))
+    except:
+        messagebox.showinfo('Error', 'No Task Selected. Cannot Delete.')
+
+def edit_task():
+    try:
+        the_value = task_listbox.get(task_listbox.curselection())
+        task_title = the_value.replace(" (Completed)", "")
+        new_task_string = task_field.get()
+        if len(new_task_string) == 0:
+            messagebox.showinfo('Error', 'New Task is Empty.')
+        else:
+            index = tasks.index((task_title, 0)) if (task_title, 0) in tasks else tasks.index((task_title, 1))
+            tasks[index] = (new_task_string, tasks[index][1])
+            list_update()
+            the_cursor.execute('update tasks set title = ? where title = ?', (new_task_string, task_title))
+            task_field.delete(0, 'end')
+    except:
+        messagebox.showinfo('Error', 'No Task Selected. Cannot Edit.')
+
+def mark_completed():
+    try:
+        the_value = task_listbox.get(task_listbox.curselection())
+        task_title = the_value.replace(" (Completed)", "")
+        index = tasks.index((task_title, 0))
+        tasks[index] = (task_title, 1)
+        list_update()
+        the_cursor.execute('update tasks set completed = 1 where title = ?', (task_title,))
+    except:
+        messagebox.showinfo('Error', 'No Task Selected. Cannot Mark Completed.')
+
+def clear_completed_tasks():
+    message_box = messagebox.askyesno('Clear Completed', 'Are you sure?')
+    if message_box:
+        tasks[:] = [task for task in tasks if task[1] == 0]
+        the_cursor.execute('delete from tasks where completed = 1')
+        list_update()
+
+def delete_all_tasks():
+    message_box = messagebox.askyesno('Delete All', 'Are you sure?')
+    if message_box:
+        tasks.clear()
+        the_cursor.execute('delete from tasks')
+        list_update()
+
+def clear_list():
+    task_listbox.delete(0, 'end')
+
+def close():
+    guiWindow.destroy()
+
+def retrieve_database():
+    tasks.clear()
+    for row in the_cursor.execute('select title, completed from tasks'):
+        tasks.append((row[0], row[1]))
+
+def add_completed_column_if_missing():
+    try:
+        the_cursor.execute('alter table tasks add column completed integer default 0')
+        the_connection.commit()
+    except sql.OperationalError:
+        pass
+
+if __name__ == "__main__":
+    guiWindow = tk.Tk()
+    guiWindow.title("SAITEJ To-Do List Manager")
+    guiWindow.geometry("600x500+750+250")
+    guiWindow.resizable(0, 0)
+    guiWindow.configure(bg="#282C34")
+
+    the_connection = sql.connect('listOfTasks.db')
+    the_cursor = the_connection.cursor()
+    the_cursor.execute('create table if not exists tasks (title text, completed integer)')
+
+    add_completed_column_if_missing()
+
+    tasks = []
+
+    header_frame = tk.Frame(guiWindow, bg="#61AFEF")
+    functions_frame = tk.Frame(guiWindow, bg="#282C34")
+    listbox_frame = tk.Frame(guiWindow, bg="#282C34", borderwidth=2, relief="solid")
+
+    header_frame.pack(fill="x", padx=10, pady=5)
+    functions_frame.pack(side="left", padx=10, pady=10, fill="y")
+    listbox_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
+
+    header_label = ttk.Label(
+        header_frame,
+        text="My To-Do List",
+        font=("Helvetica", "28", "bold"),
+        background="#61AFEF",
+        foreground="#FFFFFF"
+    )
+    header_label.pack(padx=10, pady=10)
+
+    task_label = ttk.Label(
+        functions_frame,
+        text="Enter the Task :",
+        font=("Arial", "16"),
+        background="#282C34",
+        foreground="#ABB2BF"
+    )
+    task_label.pack(padx=10, pady=5)
+
+    task_field = ttk.Entry(
+        functions_frame,
+        font=("Arial", "12"),
+        width=22
+    )
+    task_field.pack(padx=10, pady=5)
+
+    button_style = ttk.Style()
+    button_style.configure("TButton", font=("Arial", 10), padding=6)
+
+    add_button = ttk.Button(
+        functions_frame,
+        text="Add Task",
+        style="TButton",
+        command=add_task
+    )
+    edit_button = ttk.Button(
+        functions_frame,
+        text="Edit Task",
+        style="TButton",
+        command=edit_task
+    )
+    del_button = ttk.Button(
+        functions_frame,
+        text="Delete Task",
+        style="TButton",
+        command=delete_task
+    )
+    complete_button = ttk.Button(
+        functions_frame,
+        text="Mark Completed",
+        style="TButton",
+        command=mark_completed
+    )
+    clear_completed_button = ttk.Button(
+        functions_frame,
+        text="Clear Completed",
+        style="TButton",
+        command=clear_completed_tasks
+    )
+    del_all_button = ttk.Button(
+        functions_frame,
+        text="Delete All Tasks",
+        style="TButton",
+        command=delete_all_tasks
+    )
+    exit_button = ttk.Button(
+        functions_frame,
+        text="Exit",
+        style="TButton",
+        command=close
+    )
+
+    add_button.pack(padx=10, pady=5)
+    edit_button.pack(padx=10, pady=5)
+    del_button.pack(padx=10, pady=5)
+    complete_button.pack(padx=10, pady=5)
+    clear_completed_button.pack(padx=10, pady=5)
+    del_all_button.pack(padx=10, pady=5)
+    exit_button.pack(padx=10, pady=5)
+
+    task_listbox = tk.Listbox(
+        listbox_frame,
+        width=40,
+        height=20,
+        selectmode='SINGLE',
+        background="#ABB2BF",
+        foreground="#000000",
+        selectbackground="#61AFEF",
+        selectforeground="#FFFFFF",
+        font=("Arial", 12)
+    )
+    task_listbox.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+
+    scrollbar = tk.Scrollbar(listbox_frame, orient="vertical")
+    scrollbar.config(command=task_listbox.yview)
+    task_listbox.config(yscrollcommand=scrollbar.set)
+    scrollbar.pack(side="right", fill="y")
+
+    retrieve_database()
+    list_update()
+    guiWindow.mainloop()
+    the_connection.commit()
+    the_cursor.close()
