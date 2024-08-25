@@ -1,0 +1,240 @@
+import tkinter
+import random
+
+r = tkinter.Tk()
+r.geometry("500x400")
+r.minsize(500, 400)
+r.maxsize(500, 400)
+r.title("Rock Paper Scissor")
+r.config(bg="black")
+
+roundd = 0
+myscore = 0
+comscore = 0
+
+def clear_window(i):
+    for widget in r.winfo_children():
+        widget.destroy()
+    if i == 1:
+        r.after(500, round)
+    elif i == 2:
+        game_start()
+    elif i == 3:
+        ending()
+    else:
+        r.after(500, round)
+
+def ending():
+    global myscore, comscore
+    result = "GAME DRAW"
+    if myscore > comscore:
+        result = "YOU WON"
+    elif comscore > myscore:
+        result = "YOU LOSE"
+        
+    f1 = tkinter.Frame(r, bg="darkorange", padx=10, pady=10)
+    
+    l = tkinter.Label(f1, text=result, bg="darkorange", fg="white", font=("Comic Sans MS", 30, "bold"))
+    l.pack()
+    
+    b1 = tkinter.Button(f1, text="PLAY AGAIN", bg="limegreen", font=("Arial", 12), command=lambda: clear_window(4))
+    b1.pack(pady=8)
+    b2 = tkinter.Button(f1, text="QUIT", fg="white", bg="crimson", font=("Arial", 12), command=quit)
+    b2.pack()
+    
+    f1.pack(pady=120)
+
+def turn(i, myscoredigit, comscoredigit, roundleft, buttons):
+    global roundd, myscore, comscore
+    
+    roundd = int(roundvar.get())
+    roundd -= 1
+    roundvar.set(str(roundd))
+    
+    img = None
+    if i == 1:
+        img = image1
+    elif i == 2:
+        img = image2
+    else:
+        img = image3
+
+    com = random.randrange(1, 4)
+    
+    comimage = None
+    if com == 1:
+        comimage = image1
+    elif com == 2:
+        comimage = image2
+    else:
+        comimage = image3
+
+    f = tkinter.Frame(r, bg="black")
+    
+    computer = tkinter.Label(f, image=comimage, text="Computer", compound=tkinter.TOP, bg="black", fg="white", font=("Arial", 10))
+    computer.grid(row=0, column=0, pady=5)
+
+    vs = tkinter.Label(f, text="VS", bg="black", fg="white", font=("Arial", 10))
+    vs.grid(row=1, column=0, pady=5)
+    
+    you = tkinter.Label(f, image=img, text="You", compound=tkinter.TOP, bg="black", fg="white", font=("Arial", 10))
+    you.grid(row=2, column=0, pady=5)
+
+    f.pack(side="bottom")
+    
+    roundleft.config(text=f"Rounds left: {roundd}")
+    
+    if i == com:
+        pass
+    elif (i == 1 and com == 3) or (i == 2 and com == 1) or (i == 3 and com == 2):
+        myscore += 1
+        myscoredigit.config(text=myscore)
+    else:
+        comscore += 1
+        comscoredigit.config(text=comscore)
+
+    for button in buttons:
+        button.config(state=tkinter.DISABLED)
+        
+    state = buttons[0].cget('state')
+    if state == "disabled":
+        r.after(1000, lambda: clear_window(2))
+        
+    if roundd <= 0:
+        r.after(1000, lambda: clear_window(3))
+
+def game_start():
+    global roundd, myscore, comscore
+
+    roundd = int(roundvar.get())
+    
+    mainframe = tkinter.Frame(r, bg="black")
+    
+    f = tkinter.Frame(mainframe, bg="darkorange")
+    
+    b1 = tkinter.Button(f, image=image1, command=lambda: turn(1, myscoredigit, comscoredigit, roundleft, [b1, b2, b3]), bg="lightgoldenrodyellow", font=("Arial", 12))
+    b1.grid(row=0, column=0, padx=5)
+    l1 = tkinter.Label(f, text="Rock", bg="black", fg="white", font=("Arial", 12))
+    l1.grid(row=1, column=0)
+    
+    b2 = tkinter.Button(f, image=image2, command=lambda: turn(2, myscoredigit, comscoredigit, roundleft, [b1, b2, b3]), bg="lightgoldenrodyellow", font=("Arial", 12))
+    b2.grid(row=0, column=1, padx=5)
+    l1 = tkinter.Label(f, text="Paper", bg="black", fg="white", font=("Arial", 12))
+    l1.grid(row=1, column=1)
+    
+    b3 = tkinter.Button(f, image=image3, command=lambda: turn(3, myscoredigit, comscoredigit, roundleft, [b1, b2, b3]), bg="lightgoldenrodyellow", font=("Arial", 12))
+    b3.grid(row=0, column=2, padx=5)
+    l1 = tkinter.Label(f, text="Scissor", bg="black", fg="white", font=("Arial", 12))
+    l1.grid(row=1, column=2)
+    
+    f.pack(side="bottom", pady=10)
+
+    f2 = tkinter.Frame(r, bg="black")
+    myscoredigit = tkinter.Label(f2, bg="black", text=myscore, fg="white", font=("Arial", 30))
+    myscoredigit.grid(row=0, column=0, padx=5)
+    myscoretext = tkinter.Label(f2, bg="darkorange", text="Your\nscore", fg="white", font=("Arial", 15))
+    myscoretext.grid(row=1, column=0, padx=5)
+    f2.pack(side="left", pady=50)
+
+    f3 = tkinter.Frame(r, bg="black")
+    comscoredigit = tkinter.Label(f3, bg="black", text=comscore, fg="white", font=("Arial", 30))
+    comscoredigit.grid(row=0, column=0, padx=5)
+    comscoretext = tkinter.Label(f3, bg="darkorange", text="Computer\nscore", fg="white", font=("Arial", 15))
+    comscoretext.grid(row=1, column=0, padx=5)
+    f3.pack(side="right", pady=50)
+
+    roundleft = tkinter.Label(r, text=f"Rounds left: {roundd}", bg="darkorange", fg="white", font=("Arial", 12, "bold"))
+    roundleft.pack()
+    
+    mainframe.pack(side="bottom", fill="x")
+
+def delete_round():
+    global roundd
+    
+    if not (roundvar.get()).isdigit():
+        return
+    roundd = int(roundvar.get())
+    if roundd <= 0 or roundd > 10:
+        return
+    
+    r.after(500, clear_window(2))
+
+def color():
+    if len(load.get()) >= 70:
+        return
+    
+    col = l.cget("fg")
+    
+    if col == "crimson":
+        l.config(fg="limegreen")
+        img.config(image=image2)
+    elif col == "limegreen":
+        l.config(fg="orchid")
+        img.config(image=image3)
+    elif col == "orchid":
+        l.config(fg="lightcoral")
+        img.config(image=image1)
+    elif col == "lightcoral":
+        l.config(fg="cyan")
+        img.config(image=image2)
+    else:
+        l.config(fg="crimson")
+        img.config(image=image3)
+    r.after(200, color)
+
+def loading():
+    load.set(load.get() + "|" * random.randrange(1, 10))
+    
+    if len(load.get()) >= 70:
+        r.after(500, lambda: clear_window(1))
+        return
+    r.after(100, loading)
+
+def round():
+    roundvar.set("1")
+    global myscore, comscore
+    myscore = 0
+    comscore = 0
+    f1 = tkinter.Frame(r, bg="darkorange", padx=10, pady=10)
+    
+    roundlabel = tkinter.Label(f1, text="Number of rounds", bg="darkorange", fg="white", font=("Comic Sans MS", 15, "bold"), justify="center")
+    roundlabel.pack()
+    roundentry = tkinter.Entry(f1, text=roundvar, width=4, bg="lightgoldenrodyellow", font=("Arial", 12))
+    roundentry.pack(pady=6)
+    
+    b1 = tkinter.Button(f1, text="START", bg="limegreen", font=("Arial", 12), command=delete_round)
+    b1.pack(pady=8)
+    b2 = tkinter.Button(f1, text="QUIT", fg="white", bg="crimson", font=("Arial", 12), command=quit)
+    b2.pack()
+
+    l = tkinter.Label(f1, text="Rounds should be between 1 to 10", bg="black", fg="white")
+    l.pack(pady=5)
+    
+    f1.pack(pady=110)
+
+f = tkinter.Frame(r, bg="black")
+
+l = tkinter.Label(f, text="Rock Paper Scissor", fg="white", bg="black", font=("Comic Sans MS", 30, "bold"))
+l.grid(row=0, column=0)
+
+image1 = tkinter.PhotoImage(file="rock.png")
+image1 = image1.subsample(4)
+image2 = tkinter.PhotoImage(file="paper.png")
+image2 = image2.subsample(3)
+image3 = tkinter.PhotoImage(file="scissor.png")
+image3 = image3.subsample(3)
+
+img = tkinter.Label(f, image=image1, bg="black")
+img.grid(pady=10, row=2, column=0)
+
+load = tkinter.StringVar()
+loadentry = tkinter.Entry(f, text=load, fg="white", readonlybackground="black", width=20, font=("Arial", 10, "bold"), state="readonly")
+loadentry.grid(pady=20, row=1, column=0)
+f.pack(pady=80)
+
+r.after(500, color)
+r.after(1000, loading)
+
+roundvar = tkinter.StringVar()
+
+r.mainloop()
